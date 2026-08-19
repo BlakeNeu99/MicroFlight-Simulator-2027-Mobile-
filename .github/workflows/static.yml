@@ -1,19 +1,8 @@
+ # .github/workflows/deploy.yml — paste exactly
 name: Deploy MicroFlight 2027 to GitHub Pages
-
-on:
-  push:
-    branches: [main, "arena/*"]
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
+on: { push: { branches: [main, "arena/*"] }, workflow_dispatch: {} }
+permissions: { contents: read, pages: write, id-token: write }
+concurrency: { group: pages, cancel-in-progress: false }
 jobs:
   build:
     runs-on: ubuntu-latest
