@@ -2,15 +2,19 @@
   "name": "microflight-simulator-2027-mobile",
   "version": "1.0.0",
   "description": "MicroFlight Simulator 2027 (Mobile) — AAA-grade mobile flight sim with Blade Element Theory, global terrain streaming, volumetric clouds, and Vulkan/Metal-inspired renderer",
+  "homepage": "https://BlakeNeu99.github.io/MicroFlight-Simulator-2027-Mobile-/",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "tsc --noEmit && vite build",
+    "build:gh": "GH_PAGES=true vite build",
+    "build:vercel": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 5173",
+    "preview:gh": "GH_PAGES=true vite preview --host 0.0.0.0 --port 5173",
     "test": "vitest run --reporter=verbose",
     "test:watch": "vitest",
     "lint": "tsc --noEmit",
-    "benchmark": "node tests/benchmark.mjs"
+    "deploy": "npm run build:gh && gh-pages -d dist"
   },
   "devDependencies": {
     "jsdom": "^30.0.1",

@@ -2,13 +2,14 @@
   "name": "MicroFlight Simulator 2027 (Mobile)",
   "short_name": "MicroFlight 2027",
   "description": "AAA mobile flight simulator with Blade Element Theory, global streaming, volumetric clouds — surpassing X-Plane Mobile",
-  "start_url": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "landscape",
   "theme_color": "#02060a",
   "background_color": "#02060a",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }

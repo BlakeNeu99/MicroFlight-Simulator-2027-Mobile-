@@ -50,6 +50,34 @@ Open on phone or Chrome DevTools mobile emulation (landscape). **Drag left area*
 
 ---
 
+## Deploy — GitHub Pages & Vercel (Zero-Config, Both Work)
+
+**Vercel (recommended, 30 sec):**
+1. Import `BlakeNeu99/MicroFlight-Simulator-2027-Mobile-` at [vercel.com/new](https://vercel.com/new)
+2. Framework preset: **Vite** — Build `npm run build` — Output `dist` (auto-detected via `vercel.json`)
+3. Deploy — live at `https://<project>.vercel.app` with SPA rewrite + immutable asset caching
+
+**GitHub Pages (via Actions, one-click):**
+1. In GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions** (enable)
+2. Push to `main` (or any `arena/*`) — workflow `.github/workflows/deploy.yml` runs:
+   ```yaml
+   npm ci → tsc --noEmit → npm run test → GH_PAGES=true npm run build → upload dist
+   ```
+   Base is auto-set to `/MicroFlight-Simulator-2027-Mobile-/` via `vite.config.ts` (`isGhPages ? repoBase : '/'`)
+3. Live at **https://BlakeNeu99.github.io/MicroFlight-Simulator-2027-Mobile-/** — artifact includes `404.html` fallback + `.nojekyll`
+
+**Manual test both bases locally:**
+```bash
+npm run build          # → Vercel: href="/assets/..." (root)
+GH_PAGES=true npm run build  # → Pages: href="/MicroFlight-Simulator-2027-Mobile-/assets/..."
+npm run preview        # → http://localhost:5173
+GH_PAGES=true npm run preview:gh
+```
+
+`public/.nojekyll` + `dist/404.html` copied automatically for Pages SPA routing; `vercel.json` handles `rewrites` + `Cache-Control: immutable` for assets.
+
+---
+
 ## Architecture — Vulkan/Metal-inspired
 
 ```
