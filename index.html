@@ -28,6 +28,7 @@
         <span class="badge" id="fpsBadge">60 FPS • Vulkan/Metal</span>
       </div>
       <div class="top-actions">
+        <button class="btn small" id="btnHelp">? HELP</button>
         <button class="btn small" id="btnPause">⏸︎ PAUSE</button>
         <button class="btn small" id="btnCamera">◈ CAMERA</button>
         <button class="btn small" id="btnReset">↺ RESET</button>
@@ -160,6 +161,31 @@
     </div>
 
     <div id="toast" style="position:absolute;left:50%;top:64px;transform:translateX(-50%);background:rgba(0,0,0,0.72);border:1px solid rgba(0,212,255,0.28);backdrop-filter:blur(10px);padding:10px 16px;border-radius:999px;font-size:12px;letter-spacing:0.04em;z-index:20;opacity:0;pointer-events:none;transition:opacity .25s">MicroFlight 2027 • Blade Element Theory online — chase camera</div>
+
+    <!-- Onboarding — user-friendly first-run tutorial -->
+    <div id="onboard" style="position:absolute;inset:0;background:radial-gradient(900px 600px at 50% 18%, rgba(0,212,255,0.16), transparent 70%), linear-gradient(180deg, rgba(2,6,10,0.92), rgba(2,6,10,0.88));backdrop-filter:blur(10px);z-index:30;display:flex;align-items:center;justify-content:center;padding:18px">
+      <div style="max-width:560px;width:100%;background:linear-gradient(180deg, #0f1b29, #0a121d);border:1px solid rgba(0,212,255,0.22);border-radius:20px;box-shadow:0 24px 64px rgba(0,0,0,0.55);overflow:hidden">
+        <div style="padding:18px 18px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.07)">
+          <div style="width:42px;height:42px;border-radius:12px;background:conic-gradient(from 180deg at 50% 50%, #00d4ff, #0077ff, #00d4ff);display:grid;place-items:center;color:white;font-weight:900">MF</div>
+          <div><div style="font-weight:800;letter-spacing:0.06em;font-size:13px">WELCOME ABOARD — SPARROW MF-27</div><div style="font-size:11px;letter-spacing:0.12em;color:#8a9bb0">2-MINUTE FLIGHT SCHOOL • BUG-FIXED • EASY MODE</div></div>
+          <span style="margin-left:auto;font-size:10px;letter-spacing:0.12em;background:rgba(46,204,113,0.14);border:1px solid rgba(46,204,113,0.35);color:#7af0a8;padding:5px 8px;border-radius:999px">60 FPS • READY</span>
+        </div>
+        <div style="padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:12px"><div style="font-size:18px">◉</div><div style="font-weight:700;font-size:12px;margin:4px 0">1) Drag left pad = Stick</div><div style="font-size:11px;color:#8a9bb0;line-height:1.45">Gentle drags — 15% stick is enough. Release to auto-level (easy mode). Avoid yanking.</div></div>
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:12px"><div style="font-size:18px">⬢</div><div style="font-weight:700;font-size:12px;margin:4px 0">2) Right = Throttle, Bottom = Rudder</div><div style="font-size:11px;color:#8a9bb0;line-height:1.45">Slide up for power. Bottom bar = yaw. Keep 55-75% cruise.</div></div>
+          <div style="background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.22);border-radius:14px;padding:12px"><div style="font-size:18px">⚠</div><div style="font-weight:700;font-size:12px;margin:4px 0">3) Red = Microburst, Green = Thermal</div><div style="font-size:11px;color:#8a9bb0;line-height:1.45">Red dashed = 18 m/s downdraft — avoid below 1200 ft. Green = free lift — circle inside.</div></div>
+          <div style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.18);border-radius:14px;padding:12px"><div style="font-size:18px">✈︎</div><div style="font-weight:700;font-size:12px;margin:4px 0">4) Tap AUTO TAKEOFF</div><div style="font-size:11px;color:#8a9bb0;line-height:1.45">One tap sets flaps 10°, full power, gentle rotation. Then just steer.</div></div>
+        </div>
+        <div style="padding:12px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;user-select:none"><input type="checkbox" id="chkEasy" checked style="accent-color:#00d4ff;width:16px;height:16px"> <b>Easy Flight Assist</b> <span style="color:#8a9bb0">— auto-level, bank limit 32°, stall soft</span></label>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="btn small" id="btnHelpSkip">SKIP</button>
+            <button class="btn primary" id="btnHelpFly">✈︎ FLY NOW</button>
+          </div>
+        </div>
+        <div style="padding:0 18px 14px;font-size:10px;letter-spacing:0.06em;color:#5a6d84">TIP: On buggy feel, tap RESET or lower sensitivity in top bar. Your controls: <span style="color:#e6eef7">Touch • Mouse • Gamepad • Keyboard WASD/QE</span></div>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="/src/main.ts"></script>

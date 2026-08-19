@@ -13,15 +13,47 @@ const joyStick=$('joyStick'), joyArea=$('joyArea'), thrFill=$('thrFill'), thrKno
 const vAil=$('vAil'), vElev=$('vElev'), vRud=$('vRud'), vThr2=$('vThr2'), flapsLabel=$('flapsLabel');
 const fpsBadge=$('fpsBadge'), horizon=$('horizon'), mapPlane=$('mapPlane'), mapCanvas=$('mapCanvas') as HTMLCanvasElement;
 const toast=$('toast');
+const onboard=$('onboard') as HTMLElement;
+const chkEasy=document.getElementById('chkEasy') as HTMLInputElement;
 
 let flapsIdx=0; const flapSteps=[0,0.33,0.66,1];
 function showToast(msg:string){
   toast.textContent=msg; toast.style.opacity='1';
-  setTimeout(()=> toast.style.opacity='0', 2200);
+  setTimeout(()=> toast.style.opacity='0', 2400);
 }
+// onboarding — friendly first-run
+let tutorialDismissed = localStorage.getItem('mf2027_tutorial')==='done';
+if(tutorialDismissed) onboard.style.display='none';
+else onboard.style.display='flex';
+function dismissOnboard(){
+  onboard.style.opacity='0'; onboard.style.pointerEvents='none';
+  setTimeout(()=> onboard.style.display='none', 320);
+  localStorage.setItem('mf2027_tutorial','done');
+}
+document.getElementById('btnHelpFly')?.addEventListener('click', ()=>{
+  app.flight.easyAssist = chkEasy.checked;
+  try{ navigator.vibrate?.(18);}catch{}
+  dismissOnboard(); showToast(chkEasy.checked ? 'Easy assist ON — gentle & stable' : 'Realistic mode — full BET');
+  app.audio.init();
+});
+document.getElementById('btnHelpSkip')?.addEventListener('click', ()=>{
+  app.flight.easyAssist = chkEasy.checked;
+  dismissOnboard(); showToast('Skipped — tap HELP in top bar to reopen');
+});
+// allow reopen via long-press on brand?
+document.querySelector('.brand')?.addEventListener('dblclick', ()=>{
+  onboard.style.display='flex'; setTimeout(()=> onboard.style.opacity='1',10);
+});
+// easy toggle live
+chkEasy?.addEventListener('change', ()=>{ app.flight.easyAssist = chkEasy.checked; showToast(chkEasy.checked? 'Assist ON':'Assist OFF'); });
 
+// help reopen
+document.getElementById('btnHelp')?.addEventListener('click', ()=>{
+  onboard.style.display='flex'; onboard.style.opacity='1'; onboard.style.pointerEvents='auto';
+  showToast('Tutorial — pick Easy Assist then FLY NOW');
+});
 // buttons
-$('btnReset').addEventListener('click', ()=>{ app.reset(); showToast('Position reset — Sparrow Field, 1200 m'); });
+$('btnReset').addEventListener('click', ()=>{ app.reset(); showToast('Position reset — Sparrow Field, 1350 m — 64 KIAS trimmed'); });
 $('btnCamera').addEventListener('click', ()=>{ app.cycleCamera(); showToast(`Camera: ${app.camMode.toUpperCase()}`); });
 $('btnPause').addEventListener('click', (e)=>{
   const btn=e.currentTarget as HTMLButtonElement;
@@ -195,9 +227,13 @@ function updateHUD(){
   fpsBadge.textContent = `${h.fps} FPS • Vulkan/Metal`;
   fpsBadge.style.background = h.fps >=55 ? 'rgba(46,204,113,0.14)' : h.fps>=40 ? 'rgba(241,196,15,0.16)' : 'rgba(231,76,60,0.16)';
   fpsBadge.style.borderColor = h.fps >=55 ? 'rgba(46,204,113,0.35)' : h.fps>=40 ? 'rgba(241,196,15,0.35)' : 'rgba(231,76,60,0.45)';
-  horizon.style.transform = `translateY(${ -app.flight.controls.elevator*18 }px) rotate(${ -app.flight.controls.aileron*18 }deg)`;
-  // pfd pitch ladder offset by aoa
-  horizon.style.top = `${48 - app.flight.aoa*0.9}%`;
+  // BUG FIX: horizon now reflects actual aircraft attitude, not stick
+  const up = app.flight.quat.rotateVector({x:0,y:1,z:0} as any);
+  const fwd = app.flight.quat.rotateVector({x:1,y:0,z:0} as any);
+  const rollDeg = Math.atan2(up.z, up.y)*180/Math.PI;
+  const pitchDeg = Math.asin(Math.max(-1,Math.min(1, fwd.y)))*180/Math.PI;
+  horizon.style.transform = `translateY(${ -pitchDeg*2.8 }px) rotate(${ -rollDeg }deg)`;
+  horizon.style.top = `50%`;
   updateJoyVisual(); updateThrVisual();
   vAil.textContent = `${Math.round(app.flight.controls.aileron*100)}%`;
   vElev.textContent = `${Math.round(app.flight.controls.elevator*100)}%`;

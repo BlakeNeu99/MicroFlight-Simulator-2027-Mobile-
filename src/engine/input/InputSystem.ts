@@ -25,10 +25,11 @@ export class InputSystem {
     rudder: 0
   };
 
-  // customization
-  sensitivity = { pitch: 1.05, roll: 1.0, yaw: 0.9, throttle: 1 };
-  deadzone = 0.06;
+  // customization — FRIENDLY DEFAULTS (less twitchy)
+  sensitivity = { pitch: 0.78, roll: 0.82, yaw: 0.68, throttle: 1 };
+  deadzone = 0.09;
   invertPitch = false;
+  easyDamp = 0.92; // return-to-center speed when released
 
   constructor(private canvas: HTMLCanvasElement){
     this.bindEvents();
@@ -89,10 +90,14 @@ export class InputSystem {
     c.addEventListener('touchend', e=>{
       e.preventDefault();
       for(const t of Array.from(e.changedTouches)){
-        if(t.identifier===this.touch.left.id){ this.touch.left.active=false; this.aileron*=0.38; this.elevator*=0.38; }
+        if(t.identifier===this.touch.left.id){ this.touch.left.active=false; this.aileron*=0.42; this.elevator*=0.42; }
         if(t.identifier===this.touch.right.id){ this.touch.right.active=false; }
       }
-      if(e.touches.length===0){ this.touch.rudder*=0.55; this.rudder*=0.55; }
+      if(e.touches.length===0){
+        this.touch.rudder*=0.55; this.rudder*=0.55;
+        // gentle auto-center when no touch
+        this.aileron *= 0.55; this.elevator *= 0.55;
+      }
     }, {passive:false});
 
     // mouse fallback for desktop testing

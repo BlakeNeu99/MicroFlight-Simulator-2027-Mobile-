@@ -28,6 +28,7 @@ export class FlightModel {
 
   stalled = false;
   onGround = false;
+  easyAssist = true; // friendly: auto-level, bank limit, softer stall
 
   constructor(weather: WeatherField) {
     this.weather = weather;
@@ -68,16 +69,50 @@ export class FlightModel {
     this.pos.z += this.vel.z * dt;
     if(this.pos.y < 3.2) { this.pos.y = 3.2; if(this.vel.y < 0) this.vel.y = 0; this.onGround = true; }
 
-    // angular
-    this.angAcc.x = totalTorque.x * this.invInertia.x;
-    this.angAcc.y = totalTorque.y * this.invInertia.y;
-    this.angAcc.z = totalTorque.z * this.invInertia.z;
+    // --- Friendly assist: apply before integration ---
+    let adjTorque = totalTorque.clone ? totalTorque.clone() : new Vec3(totalTorque.x, totalTorque.y, totalTorque.z);
+    // copy to avoid mutating
+    const torque = new Vec3(totalTorque.x, totalTorque.y, totalTorque.z);
+    if(this.easyAssist && !this.onGround){
+      // auto-level roll: gentle spring to 0 bank when stick near center
+      const stickNeutral = Math.abs(this.controls.aileron) < 0.08 && Math.abs(this.controls.elevator) < 0.12;
+      if(stickNeutral){
+        // estimate bank from quat: roll angle approx
+        const up = this.quat.rotateVector(new Vec3(0,1,0));
+        const bank = Math.atan2(up.z, up.y); // ~ roll
+        torque.x += -bank * 4200 * dt * 6; // leveling moment
+        // pitch trim to 3 deg
+        const fwd = this.quat.rotateVector(new Vec3(1,0,0));
+        const pitch = Math.asin(Math.max(-1,Math.min(1,fwd.y)));
+        const pitchErr = pitch - 0.052; // 3 deg
+        torque.z += -pitchErr * 5600 * dt * 4;
+      }
+      // bank limit 32 deg: push back
+      const up2 = this.quat.rotateVector(new Vec3(0,1,0));
+      const bank2 = Math.atan2(up2.z, up2.y);
+      if(Math.abs(bank2) > 32*Math.PI/180){
+        const excess = Math.abs(bank2) - 32*Math.PI/180;
+        torque.x += -Math.sign(bank2) * excess * 9000;
+      }
+    }
 
-    // damping (aerodynamic damping)
-    const damp = 0.12 + Math.abs(Vec3.len(this.vel))*0.004;
-    this.angVel.x += this.angAcc.x*dt - this.angVel.x*damp*dt;
-    this.angVel.y += this.angAcc.y*dt - this.angVel.y*damp*dt;
-    this.angVel.z += this.angAcc.z*dt - this.angVel.z*damp*dt;
+    // angular
+    this.angAcc.x = torque.x * this.invInertia.x;
+    this.angAcc.y = torque.y * this.invInertia.y;
+    this.angAcc.z = torque.z * this.invInertia.z;
+
+    // damping (aerodynamic damping) — friendly: extra pitch/roll damping
+    const baseDamp = 0.14 + Math.abs(Vec3.len(this.vel))*0.0045;
+    const assistDamp = this.easyAssist ? 0.18 : 0;
+    this.angVel.x += this.angAcc.x*dt - this.angVel.x*(baseDamp+assistDamp+0.12)*dt;
+    this.angVel.y += this.angAcc.y*dt - this.angVel.y*baseDamp*dt;
+    this.angVel.z += this.angAcc.z*dt - this.angVel.z*(baseDamp+assistDamp)*dt;
+
+    // clamp insane rates (bug fix)
+    const maxRate = 2.2; // rad/s ~126 deg/s
+    this.angVel.x = Math.max(-maxRate, Math.min(maxRate, this.angVel.x));
+    this.angVel.y = Math.max(-maxRate, Math.min(maxRate, this.angVel.y));
+    this.angVel.z = Math.max(-maxRate, Math.min(maxRate, this.angVel.z));
 
     // integrate quaternion: q += 0.5 * q * ω * dt
     const q = this.quat;
@@ -125,9 +160,10 @@ export class FlightModel {
 
   reset(pos?: Vec3) {
     if(pos) this.pos = pos.clone();
-    else this.pos = new Vec3(0,1200,0);
-    this.vel = new Vec3(62,0,0);
-    this.quat = Quat.fromEuler(0,0,0);
+    else this.pos = new Vec3(0,1350,0);
+    this.vel = new Vec3(64,0.6,0);
+    this.quat = Quat.fromEuler(0.045,0,0);
     this.angVel = new Vec3();
+    this.controls = { aileron:0, elevator:0.02, rudder:0, flaps:0, throttle:0.68, brake:0, gear:1 };
   }
 }

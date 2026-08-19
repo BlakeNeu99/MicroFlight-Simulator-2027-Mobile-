@@ -152,7 +152,17 @@ canvas#game{position:absolute;inset:0;width:100%;height:100%;display:block}
 .slim{height:6px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden}
 .slim i{display:block;height:100%;background:linear-gradient(90deg, #00d4ff, #2ecc71);width:68%}
 
-/* Responsive mobile */
+/* Friendly touches: larger hit targets, clearer feedback */
+.btn:active{transform:scale(0.98)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.control-card .btn{min-height:42px}
+.joystick-area{cursor:grab} .joystick-area:active{cursor:grabbing}
+.throttle-track{cursor:ns-resize} .rudder-bar{cursor:ew-resize}
+#onboard .btn{min-height:36px}
+.hud-left .panel, .hud-right .panel{transition:transform .15s}
+.metric strong{transition:color .15s}
+
+/* Responsive mobile — FIXED: no hidden overflow, proper scrolling, larger cockpit */
 @media (max-width: 860px){
   .hud-left{width:168px;top:58px}
   .hud-right{display:none}
@@ -160,10 +170,16 @@ canvas#game{position:absolute;inset:0;width:100%;height:100%;display:block}
   .brand h1{font-size:12px}
 }
 @media (max-width: 640px){
-  .topbar{height:48px}
-  .hud-left{left:8px;right:8px;width:auto;top:54px;bottom:auto;flex-direction:row;overflow:auto;pointer-events:auto}
-  .hud-left .panel{flex:0 0 220px}
+  .topbar{height:48px;gap:8px}
+  .top-actions{gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .hud-left{left:8px;right:8px;width:auto;top:54px;bottom:auto;flex-direction:row;overflow:auto;pointer-events:auto;gap:8px;padding-bottom:4px;scrollbar-width:none}
+  .hud-left::-webkit-scrollbar{display:none}
+  .hud-left .panel{flex:0 0 220px;pointer-events:auto}
   .hud-left .panel.map-panel{display:none}
-  .cockpit{left:8px;right:8px;bottom:8px;height:128px;gap:8px}
+  .cockpit{left:8px;right:8px;bottom:8px;height:148px;gap:8px}
   .control-card{padding:9px}
+  .joystick-base{width:86px;height:86px}
+  .joystick-stick{width:44px;height:44px}
+  #onboard{padding:10px;align-items:flex-start;overflow:auto}
+  #onboard > div{margin-top:8px}
 }
