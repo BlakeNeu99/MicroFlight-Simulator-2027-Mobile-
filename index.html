@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#02060a" />
+  <title>MicroFlight Simulator 2027 (Mobile) — AAA Flight</title>
+  <meta name="description" content="MicroFlight Simulator 2027 Mobile — Blade Element Theory aerodynamics, global terrain streaming, volumetric clouds, 60 FPS mobile flight sim." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <style>
+    /* critical inline for fast paint */
+    html,body{margin:0;background:#02060a}
+  </style>
+</head>
+<body>
+  <div id="app">
+    <canvas id="game" aria-label="MicroFlight 3D view"></canvas>
+
+    <div class="reticle" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">MF</div>
+        <div>
+          <h1>MICROFLIGHT <span>2027</span></h1>
+          <small>MOBILE • BET PHYSICS • GLOBAL STREAMING</small>
+        </div>
+        <span class="badge" id="fpsBadge">60 FPS • Vulkan/Metal</span>
+      </div>
+      <div class="top-actions">
+        <button class="btn small" id="btnPause">⏸︎ PAUSE</button>
+        <button class="btn small" id="btnCamera">◈ CAMERA</button>
+        <button class="btn small" id="btnReset">↺ RESET</button>
+        <button class="btn primary small" id="btnHaptics">✈︎ FLY</button>
+      </div>
+    </div>
+
+    <div class="hud-left">
+      <div class="panel">
+        <header><h3>PRIMARY FLIGHT DISPLAY</h3><span class="dot" id="statusDot"></span></header>
+        <div class="attitude" id="attitude">
+          <div class="horizon" id="horizon"></div>
+          <div class="pitch-ladder">
+            <svg width="160" height="92" viewBox="0 0 160 92" style="opacity:0.85">
+              <g stroke="rgba(255,255,255,0.9)" stroke-width="1" fill="none">
+                <line x1="58" y1="22" x2="102" y2="22"/><line x1="66" y1="32" x2="94" y2="32"/><line x1="58" y1="42" x2="102" y2="42"/>
+                <line x1="66" y1="62" x2="94" y2="62"/><line x1="58" y1="72" x2="102" y2="72"/>
+              </g>
+              <text x="80" y="18" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-size="7" letter-spacing="0.08em">10°</text>
+            </svg>
+          </div>
+          <div class="aircraft-mark"><i></i><b></b><i></i></div>
+          <span class="badge-live">PFD • BET 120Hz</span>
+        </div>
+        <div class="instruments">
+          <div class="metric" id="mIAS"><label>AIRSPEED</label><strong id="vIAS">—</strong> <small>KIAS</small></div>
+          <div class="metric" id="mALT"><label>ALTITUDE</label><strong id="vALT">—</strong> <small>FT MSL</small></div>
+          <div class="metric"><label>VERTICAL SPEED</label><strong id="vVS">—</strong> <small>FPM</small></div>
+          <div class="metric"><label>HEADING</label><strong id="vHDG">—</strong> <small id="vHDG2">°</small></div>
+          <div class="metric"><label>ANGLE OF ATTACK</label><strong id="vAOA">—</strong> <small>°</small></div>
+          <div class="metric" id="mG"><label>G LOAD</label><strong id="vG">—</strong> <small>G</small></div>
+        </div>
+        <div class="row"><span>THROTTLE</span><b id="vTHR">68%</b></div>
+        <div class="row"><span>FLAPS / GEAR</span><b id="vFLP">0% • DN</b></div>
+        <div class="row"><span>STALL • SLIP</span><b id="vStall">—</b></div>
+      </div>
+
+      <div class="panel map-panel">
+        <header><h3>NAV & WEATHER</h3><span style="font-size:10px;color:var(--muted)">MF27-SPARROW</span></header>
+        <div class="map" id="map">
+          <div class="map-grid"></div>
+          <canvas id="mapCanvas" width="300" height="168" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+          <div class="map-plane" id="mapPlane"></div>
+          <div class="map-wind">WIND <b id="vWind">—</b> <span style="float:right;opacity:0.7">LIVE METAR</span></div>
+        </div>
+        <div class="row"><span>TERRAIN CACHE</span><b id="vTiles">— tiles</b></div>
+        <div class="row"><span>STREAMING</span><b id="vCache">SAT • 6-ch • LRU</b></div>
+        <div class="row"><span>OCCLUSION</span><b id="vOcc">Hi-Z + Frustum</b></div>
+      </div>
+    </div>
+
+    <div class="hud-right">
+      <div class="panel">
+        <header><h3>SYSTEMS & PERFORMANCE</h3><span class="badge" style="font-size:9px">LOCKED 60 FPS</span></header>
+        <div style="padding:10px;display:grid;gap:8px">
+          <div class="metric" style="display:flex;justify-content:space-between;align-items:center">
+            <div><label>FRAME TIME</label><strong id="vFT">16.6</strong> <small>ms</small></div>
+            <div style="text-align:right"><label>LOD BIAS</label><strong id="vLOD">1.00×</strong></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:0.08em;color:var(--muted)"><span>DRAW CALLS</span><span id="vDC">—</span></div>
+            <div class="slim"><i id="barDC" style="width:58%"></i></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:0.08em;color:var(--muted)"><span>TRIANGLES</span><span id="vTR">—</span></div>
+            <div class="slim"><i id="barTR" style="width:62%;background:linear-gradient(90deg,#00d4ff,#7c4dff)"></i></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:0.08em;color:var(--muted)"><span>GPU THERMAL</span><span id="vTherm">NOMINAL</span></div>
+            <div class="slim"><i id="barTherm" style="width:34%;background:linear-gradient(90deg,#2ecc71,#f1c40f)"></i></div>
+          </div>
+        </div>
+        <div class="row"><span>PHYSICS</span><b>BET 24 elements • 120 Hz</b></div>
+        <div class="row"><span>RENDERER</span><b>WebGL2 • Vulkan-style • FXAA</b></div>
+        <div class="row"><span>AERODYNAMICS</span><b>Ground effect • Microbursts</b></div>
+      </div>
+
+      <div class="panel" style="padding:10px">
+        <h4 style="margin:0 0 8px;font-size:10px;letter-spacing:0.12em;color:var(--muted)">FLIGHT ASSISTS</h4>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn small" id="btnFlaps">FLAPS 0%</button>
+          <button class="btn small" id="btnGear">GEAR DN</button>
+          <button class="btn small" id="btnBrake">BRAKE</button>
+          <button class="btn small" id="btnWeather">WEATHER: LIVE</button>
+        </div>
+        <p style="margin:10px 0 0;font-size:11px;line-height:1.5;color:var(--muted)">
+          <b style="color:var(--text)">Pro tip:</b> Hunt thermals (rising) near <span style="color:var(--accent)">800,1200</span> and ride ridge lift. Avoid red microburst cores on map — expect 18 m/s downdraft + 30 Kt outflow at 400 ft AGL.
+        </p>
+      </div>
+    </div>
+
+    <div class="cockpit">
+      <div class="control-card">
+        <h4><span>◉ FLIGHT STICK</span><span style="opacity:0.6">PITCH / ROLL</span></h4>
+        <div class="joystick-area" id="joyArea">
+          <div class="joystick-base"></div>
+          <div class="joystick-stick" id="joyStick"></div>
+          <div style="position:absolute;left:8px;bottom:8px;font-size:9px;letter-spacing:0.12em;color:rgba(255,255,255,0.55)">DRAG • SPRING CENTER</div>
+          <div style="position:absolute;right:8px;top:8px;font-size:9px;letter-spacing:0.08em;color:var(--accent);background:rgba(0,212,255,0.12);padding:3px 6px;border-radius:999px;border:1px solid rgba(0,212,255,0.28)">BET ACTIVE</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <span style="flex:1;text-align:center;font-size:10px;letter-spacing:0.08em;color:var(--muted)">AIL <b id="vAil" style="color:var(--text)">0%</b></span>
+          <span style="flex:1;text-align:center;font-size:10px;letter-spacing:0.08em;color:var(--muted)">ELEV <b id="vElev" style="color:var(--text)">0%</b></span>
+        </div>
+      </div>
+
+      <div class="control-card">
+        <h4><span>⬢ THROTTLE & RUDDER</span><span style="opacity:0.6">YAW</span></h4>
+        <div class="throttle-rail">
+          <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:0.08em;color:var(--muted)"><span>IDLE</span><span style="color:var(--accent)">POWER</span></div>
+          <div class="throttle-track" id="thrTrack">
+            <div class="throttle-fill" id="thrFill" style="height:68%"></div>
+            <div class="throttle-knob" id="thrKnob" style="bottom:68%"></div>
+          </div>
+          <div class="rudder-bar" id="rudBar"><div class="rudder-fill" id="rudFill"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted)"><span>RUD <b id="vRud" style="color:var(--text)">0%</b></span><span id="vThr2" style="color:var(--accent)">68%</span></div>
+        </div>
+      </div>
+
+      <div class="control-card">
+        <h4><span>◐ SYSTEMS</span><span style="opacity:0.6">TOUCH OPTIMIZED</span></h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1">
+          <button class="btn" id="btnFlaps2" style="font-size:11px">FLAPS<br><b id="flapsLabel" style="font-size:14px">0°</b></button>
+          <button class="btn" id="btnGear2" style="font-size:11px">LANDING<br><b style="font-size:14px">GEAR</b></button>
+          <button class="btn" id="btnBrake2" style="font-size:11px">HOLD<br><b>BRAKE</b></button>
+          <button class="btn primary" id="btnTakeoff" style="font-size:11px">AUTO<br><b>TAKEOFF</b></button>
+        </div>
+        <div style="font-size:10px;letter-spacing:0.08em;color:var(--muted);display:flex;justify-content:space-between"><span>GAMEPAD: A=BRAKE • LT/RT=YAW</span><span id="ctlHint">TOUCH + TILT</span></div>
+      </div>
+    </div>
+
+    <div id="toast" style="position:absolute;left:50%;top:64px;transform:translateX(-50%);background:rgba(0,0,0,0.72);border:1px solid rgba(0,212,255,0.28);backdrop-filter:blur(10px);padding:10px 16px;border-radius:999px;font-size:12px;letter-spacing:0.04em;z-index:20;opacity:0;pointer-events:none;transition:opacity .25s">MicroFlight 2027 • Blade Element Theory online — chase camera</div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
