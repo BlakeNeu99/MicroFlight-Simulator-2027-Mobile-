@@ -1,0 +1,40 @@
+name: Deploy MicroFlight 2027 to GitHub Pages
+
+on:
+  push:
+    branches: [main, "arena/*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm run test
+      - run: npm run build
+        env: { GH_PAGES: "true", GITHUB_ACTIONS: "true" }
+      - run: cp dist/index.html dist/404.html
+      - run: touch dist/.nojekyll
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: ./dist }
+  deploy:
+    environment: { name: github-pages, url: ${{ steps.deployment.outputs.page_url }} }
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
